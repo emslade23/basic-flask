@@ -1,4 +1,5 @@
-from flask import Flask, render_template, Api, Resource, reqparse
+from flask import Flask, render_template
+from flask_restful import Api, Resource, reqparse
 
 app = Flask(__name__)
 
@@ -30,10 +31,10 @@ users = [
 class User(Resource):
     def get(self, name):
         for user in users:
+            print(user)
             if name == user["name"]:
                 return user, 200
-            else:
-                return "User not found", 404
+        return "User not found", 404
     
     def post(self, name):
         parser = reqparse.RequestParser()
@@ -56,7 +57,35 @@ class User(Resource):
         
 
     def put(self, name):
+        parser = reqparse.RequestParser()
+        parser.add_argument("age") # adds arguments to be parsed
+        parser.add_argument("occupation")
+
+        args = parser.parse_args() # parses arguments
+
+        isUserThere = False
+        for user in users:
+            if name == user["name"]: # put request
+                user["age"] = args["age"]
+                user["occupation"] = args["occupation"]
+                return user, 200
+        user = {
+            "name": name,
+            "age" : args["age"],
+            "occupation": args["occupation"]
+        }
+        users.append(user) # new user
+        return user, 201
+
 
     def delete(self, name):
+        global users
+        for i in range(len(users)):
+            if name == users[i]["name"]:
+                del users[i]
+        return users, 200
 
-    
+
+api.add_resource(User, "/user/<string:name>")
+
+app.run(debug=True)
